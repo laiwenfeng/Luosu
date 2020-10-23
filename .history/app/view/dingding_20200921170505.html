@@ -1,0 +1,18 @@
+<!-- app/view/dingding.html -->
+<html>
+  <head>
+    <title>Hacker News</title>
+    <link rel="stylesheet" href="/public/css/news.css" />
+  </head>
+  <script src="../public/js/jQuery/jquery.min.js"></script>
+  <script src="../public/js/xlsx/xlsx.core.min.js"></script>
+  <body>
+    <ul class="news-view view">
+      {% for item in msg %}
+        <li class="item">
+          <a href="{{ item.url }}">{{ item.title }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

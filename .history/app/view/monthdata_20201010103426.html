@@ -1,0 +1,239 @@
+<!-- app/view/monthdata.html -->
+<html>
+
+    <head>
+        <title>monthdata.html</title>
+        <style>
+            html,
+            body {
+                width: 100%;
+                margin: 0%;
+                padding: 0%;
+            }
+        </style>
+    </head>
+    <script src="../public/js/jQuery/jquery.min.js"></script>
+
+    <body>
+        <div>
+            <input id="month7" name="month" type="checkbox" value="7" />
+            <label for="month7" >7月</label>&nbsp;&nbsp;&nbsp;&nbsp;
+            <input id="month8" name="month" type="checkbox" value="8" />
+            <label for="month8">8月</label>&nbsp;&nbsp;&nbsp;&nbsp;
+            <input id="month9" name="month" type="checkbox" value="9" />
+            <label for="month9">9月</label>&nbsp;&nbsp;&nbsp;&nbsp;
+            <input id="issend" name="issend" type="checkbox" value="1" />
+            <label for="issend">工资已发放</label>&nbsp;&nbsp;&nbsp;&nbsp;
+            <button onclick="Monthdata()">计算</button>
+            <button onclick="SendData()">发送数据</button>
+        </div>
+        <div id="monthdata"></div>
+    </body>
+
+</html>
+<script type="text/javascript">
+    let GrList = null
+    function SendData() {
+        if (confirm("确认要发送工时数据吗？")) {
+            alert("开始发送")
+            $.ajax({
+                url: '/dingding/sendseasondata',
+                data: { "grlist": GrList },
+                type: 'post',
+                headers: {
+                    // 前后端不分离的情况加每次打开客户端，egg会直接在客户端的 Cookie 中写入密钥 ，密钥的 Key 就是 'scrfToken' 这个字段，所以直接获取就好了
+                    'x-csrf-luosu-token': getCookie("csrfToken"), 
+                },
+                dataType: "json",
+                success: function (result) {
+                    alert(result["result"])
+                },
+                error: function (result) {
+                    alert(resultresult)
+                }
+            })
+        }
+        else {
+            alert("终止发送")
+        }
+    }
+
+
+    // 封装获取 cookie 的方法
+    function getCookie(name) {
+        var arr, reg = new RegExp("(^| )" + name + "=([^;]*)(;|$)");
+        if (arr = document.cookie.match(reg))
+            return unescape(arr[2]);
+        else
+            return null;
+    }
+
+    function Monthdata() {
+        let month = []
+        $("input[name=month]:checked").each(function () {
+            month.push(this.value)
+        })
+
+        $.ajax({
+            url: '/monthdata/monthdata',
+            type: 'get',
+            data: { "months": month.join(",") },
+            headers: {
+                // 前后端不分离的情况加每次打开客户端，egg会直接在客户端的 Cookie 中写入密钥 ，密钥的 Key 就是 'scrfToken' 这个字段，所以直接获取就好了
+                'x-csrf-luosu-token': getCookie("csrfToken"),
+            },
+            dataType: "json",
+            success: ShowTimeList
+        })
+    }
+
+
+    function ShowTimeList(finaldata){
+        let month = []
+        $("input[name=month]:checked").each(function () {
+            month.push(this.value)
+        })
+
+        let issend = []
+        $("input[name=issend]:checked").each(function () {
+            issend.push(this.value)
+        })
+
+        console.log(issend.join(","))
+
+        let SendData = SendDataInit(finaldata, month, issend.length == 1)
+        document.getElementById('monthdata').innerHTML = SendData["html"]
+
+        GrList = SendData["grlist"]
+    }
+
+
+    function SendDataInit(grlist, month, issend) {
+        const PersonFilter = ["张思轶", "高进", "褚锦涛", "陈敬波", "蒋超"]
+
+        let deptObj = {
+            "前端开发组": "技术开发部",
+            "服务开发组": "技术开发部",
+            "架构组": "技术开发部",
+            "测试组": "运维测试部"
+        }
+
+        let tempAry = []
+        for (let i in grlist) {
+            let { name } = grlist[i]
+            if (PersonFilter.indexOf(name) == -1) {
+                tempAry.push(grlist[i])
+            }
+        }
+
+        tempAry.sort(function (a, b) {
+            let ace = parseFloat(a["cehstime"]), bce = parseFloat(b["cehstime"])
+            if (ace >= bce) {
+                return -1
+            }
+            return 1
+        })
+
+        let alltime = 0, jstime = 0, cstime = 0, alltemp = 0, jstemp = 0, cstemp = 0, allrank = 1, jsrank = 1, csrank = 1
+        let table = "<table id='tablestyle'><tr class='header'>"
+        table += "<td><b>责任人</b></td><td><b>核算工时</b></td><td><b>标准工时</b></td><td><b>个人超额工时</b></td><td><b>全体排名(个人)</b></td><td><b>部门排名(个人)</b></td><td><b>备注(个人)</b></td><td><b>超额工时(团队)</b></td>"
+        for(let mi in month){
+            table += "<td><b>"+month[mi]+"月团队</b></td>"
+        }
+        table += "<td><b>超额工时(个人+团队)</b></td>"
+        table += "</tr>"
+
+        for (let i in tempAry) {
+            let cehstime = parseFloat(tempAry[i]["cehstime"])
+            let bztime = parseFloat(tempAry[i]["bztime"])
+            let dept = tempAry[i]["dept"]
+            let cepercent = cehstime * 100 / bztime
+
+            if (alltime != cehstime) {
+                alltime = cehstime
+                allrank += alltemp
+                alltemp = 1
+            }
+            else {
+                alltemp++
+            }
+            if (deptObj[dept] == "技术开发部") {
+                if (jstime != cehstime) {
+                    jstime = cehstime
+                    jsrank += jstemp
+                    jstemp = 1
+                }
+                else {
+                    jstemp++
+                }
+            }
+            else if (deptObj[dept] == "运维测试部") {
+                if (cstime != cehstime) {
+                    cstime = cehstime
+                    csrank += cstemp
+                    cstemp = 1
+                }
+                else {
+                    cstemp++
+                }
+            }
+
+            tempAry[i]['rank'] = allrank
+            tempAry[i]['deptrank'] = deptObj[dept] == "技术开发部" ? jsrank : csrank
+
+            let issendremark = ""
+            if(issend){
+                issendremark = "奖励已发送至你工资卡，请查收！此次发放总奖励的60%，剩余40%将在年底发放。"
+            }
+            else{
+                issendremark = "奖励即将发送至你工资卡，请注意查收！此次发放总奖励的60%，剩余40%将在年底发放。"
+            }
+
+            let remark = ""
+            if (cepercent <= -5) {
+                remark = "亲爱的小伙伴，你["+month.join("月,")+"月]的工时总和未达标，可以联系你的小组长申请额外任务哦！"
+            }
+            else if (cepercent > -5 && cepercent < 0) {
+                remark = "亲爱的小伙伴，你["+month.join("月,")+"月]的工时总和未达标，接下来还需加油工作才可以拿到奖励哦！"
+            }
+            else if (cepercent == 0) {
+                remark = "亲爱的小伙伴，你["+month.join("月,")+"月]的工时总和刚刚好达标，继续努力工作就可以拿到额外奖励哦！"
+            }
+            else if (cepercent > 0 && cepercent < 5) {
+                remark = "亲爱的小伙伴，做得不错！你["+month.join("月,")+"月]的工时总和已超额，祝贺你拿到额外奖励，继续努力吧！"+issendremark
+            }
+            else if (cepercent >= 5 && cepercent < 10) {
+                remark = "亲爱的小伙伴，做得不错！你["+month.join("月,")+"月]的工时总和超额大于等于5%，祝贺你拿到额外奖励，继续加油！"+issendremark
+            }
+            else if (cepercent >= 10 && cepercent < 15) {
+                let rankremark = "名列团队辛勤榜前茅"
+                if (allrank == 1) {
+                    rankremark = "荣登团队辛勤榜榜首"
+                }
+                remark = "亲爱的小伙伴，你辛苦了！你["+month.join("月,")+"月]的工时总和超额大于等于10%，" + rankremark + "，祝贺你拿到额外奖励，继续加油！"+issendremark
+            }
+            else if (cepercent >= 15) {
+                let rankremark = "名列团队辛勤榜前茅"
+                if (allrank == 1) {
+                    rankremark = "荣登团队辛勤榜榜首"
+                }
+                remark = "亲爱的小伙伴，你辛苦了！你["+month.join("月,")+"月]的工时总和超额大于等于15%，" + rankremark + "，祝贺你拿到额外奖励，继续加油！"+issendremark
+            }
+
+            tempAry[i]['remark'] = remark
+
+            table += "<tr>"
+            table += "<td>" + tempAry[i]["name"] + "</td><td>" + tempAry[i]["hstime"] + "</td><td>" + tempAry[i]["bztime"] + "</td><td>" + tempAry[i]["cehstime"]
+                + "</td><td>" + tempAry[i]["rank"] + "</td><td>" + tempAry[i]["deptrank"] + "</td><td>" + tempAry[i]["remark"] + "</td><td>" + tempAry[i]["teamtime"] 
+                + "</td>"
+            for(let mi in month){
+                table += "<td>"+tempAry[i]["teammonth"+month[mi]]+"</td>"
+            }
+            table += "<td>" + tempAry[i]["cehstimetotal"] + "</td>"
+            table += "</tr>"
+        }
+        table += "</table>"
+
+        return { "html": table, "grlist": tempAry }
+    }
+</script>

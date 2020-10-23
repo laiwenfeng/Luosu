@@ -1,0 +1,949 @@
+<!-- app/view/dingding.html -->
+<html>
+
+    <head>
+        <title>Ding.html</title>
+        <style>
+            html,
+            body {
+                width: 100%;
+                margin: 0%;
+                padding: 0%;
+            }
+
+            .container {
+                width: auto;
+                margin: 0px auto;
+            }
+
+            .txtname {
+                width: 120px;
+                display: inline-block;
+                text-align: right;
+                padding-right: 10px;
+            }
+
+            .txtvalue {
+                width: 800px;
+                margin-bottom: 5px;
+            }
+
+            .txaresult {
+                vertical-align: top;
+                width: 800px;
+                height: 100px;
+            }
+
+            .btnget {
+                width: 660px;
+                margin: 0px 20px 5px 110px;
+                display: inline-block;
+            }
+
+            .divpic {
+                width: 100%;
+                height: 768px;
+                display: inline-block;
+                vertical-align: top;
+                margin: 0px auto;
+            }
+
+            .nolabeldivpic {
+                margin-left: 110px;
+            }
+
+            .txtdata {
+                width: 660px;
+                height: 50px;
+                display: inline-block;
+                vertical-align: top;
+            }
+
+            .group {
+                width: 660px;
+            }
+
+            #tablestyle {
+                border-collapse: collapse;
+                font-family: '宋体';
+            }
+
+            .header {
+                text-align: center;
+            }
+
+            #tablestyle td {
+                border: 1px solid black;
+            }
+
+            .bztime {
+                height: 30px;
+            }
+        </style>
+    </head>
+    <script src="../public/js/jQuery/jquery.min.js"></script>
+    <script src="../public/js/xlsx/xlsx.core.min.js"></script>
+
+    <body>
+        <div class="container">
+            <table align="center">
+                <tr align="center">
+                    <td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;标准工时</b></td>
+                    <td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;读取excel</b></td>
+                </tr>
+                <tr align="center">
+                    <td>
+                        <select id="datetype" onchange="ChangeDatetype(this.value)" class="bztime">
+                            <option value="1">周</option>
+                            <option value="2">自定义</option>
+                        </select>
+                        <input type="text" id="bztime" value="37.5" class="bztime" />
+                    </td>
+                    <td>
+                        <input type="file" id="file" style="display:none;"
+                            accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                        <a
+                            href="javascript:selectFile()">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;加载本地excel文件</a>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id="datacontainer" class="container">
+            <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;个人工时数据：
+            <p>
+            <div id="result2"></div>
+
+            <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;负责人工时数据：</p>
+            <div id="result5"></div>
+
+            <label class="txtname">图|全体成员</label><br />
+            <div id="map0" class="divpic"></div><br />
+            <label class="txtname">图|技术开发部</label><br />
+            <div id="map1" class="divpic"></div><br />
+            <label class="txtname">图|前端组</label><br />
+            <div id="map2" class="divpic"></div><br />
+            <label class="txtname">图|后端组</label><br />
+            <div id="map3" class="divpic"></div><br />
+            <label class="txtname">图|架构组</label><br />
+            <div id="map4" class="divpic"></div><br />
+            <label class="txtname">图|测试组</label><br />
+            <div id="map5" class="divpic"></div><br />
+        </div>
+
+        <div>
+
+        </div>
+    </body>
+
+</html>
+<script type="text/javascript" src="../public/js/echarts/dat.gui.min.js"></script>
+<script type="text/javascript" src="../public/js/echarts/echarts.min.js?_v_=1578305236132"></script>
+<script type="text/javascript" src="../public/js/echarts/ecStat.min.js?_v_=1578305236132"></script>
+<script type="text/javascript" src="../public/js/echarts/china.js?_v_=1578305236132"></script>
+<script type="text/javascript" src="../public/js/echarts/world.js?_v_=1578305236132"></script>
+<script type="text/javascript" src="../public/js/echarts/dataTool.js?_v_=1578305236132"></script>
+<script type="text/javascript" src="../public/js/echarts/ace.js"></script>
+<script type="text/javascript" src="../public/js/echarts/ext-language_tools.js"></script>
+<script type="text/javascript">
+    function ChangeDatetype(v) {
+        if (v == "1") {
+            $("#bztime").val("37.5")
+        }
+        else {
+            $("#bztime").val("")
+        }
+    }
+
+    function selectFile() {
+        document.getElementById('file').click();
+    }
+
+    // 读取本地excel文件
+    function readWorkbookFromLocalFile(file, callback) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            var data = e.target.result;
+            var workbook = XLSX.read(data, { type: 'binary' });
+            if (callback) callback(workbook);
+        };
+        reader.readAsBinaryString(file);
+    }
+
+    // 从网络上读取某个excel文件，url必须同域，否则报错
+    function readWorkbookFromRemoteFile(url, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('get', url, true);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function (e) {
+            if (xhr.status == 200) {
+                var data = new Uint8Array(xhr.response)
+                var workbook = XLSX.read(data, { type: 'array' });
+                if (callback) callback(workbook);
+            }
+        };
+        xhr.send();
+    }
+
+    // 读取 excel文件
+    function outputWorkbook(workbook) {
+        var sheetNames = workbook.SheetNames; // 工作表名称集合
+        sheetNames.forEach(name => {
+            var worksheet = workbook.Sheets[name]; // 只能通过工作表名称来获取指定工作表
+            for (var key in worksheet) {
+                // v是读取单元格的原始值
+                console.log(key, key[0] === '!' ? worksheet[key] : worksheet[key].v);
+            }
+        });
+    }
+
+
+    const ECode = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    const Keyword = ["负责人", "预估工时", "已登记工时", "任务类型", "参与人员"]
+    const KaoqingKeyword = ["员工", "部门", "工作时长", "请假工时"]
+    const WorkType = ["迭代任务", "非迭代内的技术任务", "版本上线", "线上bug修复", "线下bug修复", "线上协助", "会议（需求、详设、用例评审会议）", "会议（一般会议）", "面试", "团队管理", "沟通交流", "项目熟悉", "非会议培训", "自我学习", "其他（慎选！！）"]
+
+    const ProjectOwner = {
+        "洪闻": ["丁晓欢", "叶洁", "洪闻", "怀欣冉", "张长安", "段永菊"], //6
+        "沈晓振": ["阮梦帅", "彭甜甜", "陈敬波", "沈晓振", "高进"], //5
+        "刘宗文": ["褚锦涛", "范逸东", "刘宗文", "陆夏立", "骆家豪", "梁宝龙", "郑磊", "张坚革", "张浩磊", "赵晟", "郭玉燕", "吴嘉豪"], //12
+        "程兴": ["王凯杰", "赵川", "黄金名", "程兴", "刘慧杰"],// 5
+        "孙世豪": ["胡茜", "吴林涛", "孙世豪", "姜宇"], //4
+        "唐洪云": ["邱克浩", "唐洪云", "黄金浩", "王盼"] //4
+    }
+
+    function readWorkbook(workbook) {
+        alert('开始计算');
+
+        let bztime = $("#bztime").val()
+        if (!bztime || isNaN(bztime)) {
+            alert("标准工时为空或值不合法！")
+            return
+        }
+
+        //工作表1：任务；工作表2：缺陷；工作表3：考勤
+        var sheetNames = workbook.SheetNames; // 工作表名称集合
+
+        //任务
+        let worksheet1 = workbook.Sheets[sheetNames[0]] // 读取第一张sheet
+        let dMap = keyInfo([], worksheet1, Keyword)
+        dMap = Meeting(dMap)
+        //	document.getElementById('result1').innerHTML = JSON.stringify(dMap)
+
+        //缺陷
+        let worksheet2 = workbook.Sheets[sheetNames[1]] // 读取第二张sheet
+        dMap = keyInfo(dMap, worksheet2, Keyword, { "任务类型": "线下bug修复" })
+        //	document.getElementById('result3').innerHTML = JSON.stringify(dMap)
+
+        //考勤
+        let worksheet3 = workbook.Sheets[sheetNames[2]] // 读取第三张sheet
+        let kqMap = keyInfo([], worksheet3, KaoqingKeyword)
+        let kqTime = groupByPerson(kqMap, bztime)
+        //	console.log("result4="+JSON.stringify(kqTime))
+        //	document.getElementById('result4').innerHTML = JSON.stringify(kqTime)
+
+        //个人工时表数据
+        let pdata = groupByPersonWorktype(dMap)
+
+        let finaldata = showdata(pdata, kqTime)
+        document.getElementById('result2').innerHTML = finaldata["tablehtml"]
+
+        //负责人工时表数据
+        document.getElementById('result5').innerHTML = showFZR(finaldata["grdata"], ProjectOwner)
+
+        //工时图
+        GetTTT(pdata, kqTime, ['前端开发组', '服务开发组', '架构组', '测试组'], '全体成员图', 'map0')
+        GetTTT(pdata, kqTime, ['前端开发组', '服务开发组', '架构组'], '技术开发部图', 'map1')
+        GetTTT(pdata, kqTime, ['前端开发组'], '前端组工时图', 'map2')
+        GetTTT(pdata, kqTime, ['服务开发组'], '后端组工时图', 'map3')
+        GetTTT(pdata, kqTime, ['架构组'], '架构组工时图', 'map4')
+        GetTTT(pdata, kqTime, ['测试组'], '测试组工时图', 'map5')
+
+        SendDataInit(finaldata["grlist"])
+
+        alert('结束计算');
+        
+    }
+
+    function SendDataInit(grlist){
+        // "name": name,
+        //         "hstime": hstime,
+        //         "bztime": bztime,
+        //         "cehstime": cehstime,
+        //         "cekzltime": cekzltime,
+        //         "dept": dept
+        let deptObj = {
+            "前端开发组": "技术开发部",
+            "服务开发组": "技术开发部",
+            "架构组": "技术开发部",
+            "测试组": "运维测试部"
+        }
+
+        grlist.sort(function(a, b){
+            let ace = parseFloat(a["cehstime"]), bce = parseFloat(b["cehstime"])
+            if(ace >= bce){
+                return 1
+            }
+            return -1
+        })
+
+        let alltime = 0, jstime = 0, cstime = 0, allrank = 1, jsrank = 1, csrank = 1
+        for(let i in grlist){
+            let cshstime = parseFloat(grlist[i]["cehstime"])
+            let dept = grlist[i]["dept"]
+
+            grlist['rank'] = allrank
+            grlist['deptrank'] = deptObj[dept] == "技术开发部" ? jsrank : csrank
+
+            if(alltime != cehstime){
+                alltime = cehstime
+                allrank++
+            }
+            if(jstime != cehstime){
+                jstime = cehstime
+                jsrank++
+            }
+            if(cstime != cehstime){
+                cstime = cehstime
+                csrank++
+            }
+        }
+
+        return grlist
+    }
+
+
+
+    function TimeSort(a, b) {
+        let ace = parseFloat(a["cehstime"]), bce = parseFloat(b["cehstime"])
+        if (ace >= bce) {
+            return -1
+        }
+        return 1
+    }
+
+    function GetTTT(worktime, yztime, deptgroup, groupname, id) {
+        let chartdata = []
+        for (let name in worktime) {
+            let info = worktime[name], dept = yztime[name]["部门"]
+            if (deptgroup.indexOf(dept) != -1) {
+                let mxtime = (info["迭代任务"]["预估工时"] + info["非迭代内的技术任务"]["预估工时"] + info["版本上线"]["已登记工时"] + info["线上bug修复"]["预估工时"] + info["线下bug修复"]["预估工时"] + info["线上协助"]["已登记工时"] + info["会议（需求、详设、用例评审会议）"]["已登记工时"]).toFixed(2)
+                let fztime = (info["沟通交流"]["已登记工时"] + info["非会议培训"]["已登记工时"] + info["会议（一般会议）"]["已登记工时"] + info["团队管理"]["已登记工时"] + info["项目熟悉"]["已登记工时"] + info["面试"]["已登记工时"] + info["自我学习"]["已登记工时"] + info["其他（慎选！！）"]["已登记工时"]).toFixed(2)
+                let hstime = (parseFloat(mxtime) + parseFloat(fztime)).toFixed(2)
+                let mxdjtime = (info["迭代任务"]["已登记工时"] + info["非迭代内的技术任务"]["已登记工时"] + info["版本上线"]["已登记工时"] + info["线上bug修复"]["已登记工时"] + info["线下bug修复"]["已登记工时"] + info["线上协助"]["已登记工时"] + info["会议（需求、详设、用例评审会议）"]["已登记工时"]).toFixed(2)
+                let kqtime = yztime[name]["考勤工时"]
+                let bztime
+                try {
+                    bztime = yztime[name]["标准工时"]
+                }
+                catch (e) {
+                    console.log("Error[name]=" + name);
+                }
+                let kq1htime = yztime[name]["考勤1h工时"]
+                let kq1hdjtime = (parseFloat(kq1htime) - parseFloat(mxdjtime) - parseFloat(fztime)).toFixed(2)
+                let zdjtime = (parseFloat(mxdjtime) + parseFloat(fztime)).toFixed(2)
+                let dgtime = (bztime - zdjtime).toFixed(2)
+                let cehstime = (hstime - bztime).toFixed(2)
+
+                chartdata.push({
+                    "name": name,
+                    "hstime": hstime,
+                    "kqtime": kqtime,
+                    "bztime": bztime,
+                    "kq1htime": kq1htime,
+                    "kq1hdjtime": kq1hdjtime,
+                    "mxtime": mxtime,
+                    "fztime": fztime,
+                    "dgtime": dgtime,
+                    "cehstime": cehstime
+                })
+
+            }
+        }
+
+        chartdata.sort(TimeSort)
+        let renyuan = [], hesuan = [], kaoqing = [], biaozhun = [], kaoqing1h = [], kaoqing1hdengji = [], moxing = [], fuzhu = [], denggong = [], chaoe = []
+        for (let index in chartdata) {
+            renyuan.push(chartdata[index]["name"])
+            hesuan.push(chartdata[index]["hstime"])
+            kaoqing.push(chartdata[index]["kqtime"])
+            biaozhun.push(chartdata[index]["bztime"])
+            kaoqing1h.push(chartdata[index]["kq1htime"])
+            kaoqing1hdengji.push(chartdata[index]["kq1hdjtime"])
+            moxing.push(chartdata[index]["mxtime"])
+            fuzhu.push(chartdata[index]["fztime"])
+            denggong.push(chartdata[index]["dgtime"])
+            chaoe.push(chartdata[index]["cehstime"])
+        }
+
+        let option = {
+            title: {
+                text: '工时图'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data: ['考勤1h登记差', '核算工时', '考勤工时', '标准工时', '考勤1h工时', '模型工时', '辅助工时', '等工工时', '超额工时']
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            toolbox: {
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                axisLabel: {
+                    interval: 0,
+                    rotate: 70
+                },
+                data: ['']
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [
+                {
+                    name: '考勤1h登记差',
+                    type: 'line',
+                    data: [],
+                    label: { show: true }
+                },
+                {
+                    name: '考勤1h工时',
+                    type: 'line',
+                    data: [],
+                    label: { show: true }
+                }, {
+                    name: '标准工时',
+                    type: 'line',
+                    data: [],
+                    label: { show: true }
+                }, {
+                    name: '模型工时',
+                    type: 'bar',
+                    data: [],
+                    stack: '总量',
+                    label: { show: true }
+                }, {
+                    name: '辅助工时',
+                    type: 'bar',
+                    data: [],
+                    stack: '总量',
+                    label: { show: true }
+                }, {
+                    name: '超额工时',
+                    type: 'line',
+                    data: [],
+                    label: { show: true }
+                }, {
+                    name: '等工工时',
+                    type: 'line',
+                    data: [],
+                    label: { show: true }
+                }
+            ]
+        }
+
+        option["title"]["text"] = groupname;
+        option["xAxis"]["data"] = [''].concat(renyuan);
+        //	option["series"][0]["data"] = [''].concat(hesuan);
+        option["series"][0]["data"] = [''].concat(kaoqing1hdengji);
+        option["series"][1]["data"] = [''].concat(kaoqing1h);
+        option["series"][2]["data"] = [''].concat(biaozhun);
+        option["series"][3]["data"] = [''].concat(moxing);
+        option["series"][4]["data"] = [''].concat(fuzhu);
+        option["series"][5]["data"] = [''].concat(chaoe);
+        option["series"][6]["data"] = [''].concat(denggong);
+
+        var myChart1 = echarts.init(document.getElementById(id));
+        myChart1.setOption(option);
+    }
+
+    //获取各列关键信息
+    function keyInfo(dMap, worksheet, keyword, defaultType) {
+        //获取标题
+        let cMap = {}
+        let isend = false
+        for (let i = 0; !isend; i++) {
+            for (let j = 0; j < 26; j++) {
+                if (i == 0) {
+                    if (!worksheet[ECode[j] + "1"]) {
+                        isend = true
+                        break
+                    }
+                    cMap[worksheet[ECode[j] + "1"]["w"]] = ECode[j];
+                }
+                else {
+                    if (!worksheet[ECode[i - 1] + ECode[j] + "1"]) {
+                        isend = true
+                        break
+                    }
+                    cMap[worksheet[ECode[i - 1] + ECode[j] + "1"]["w"]] = ECode[i - 1] + ECode[j];
+                }
+            }
+        }
+
+        let total = 1;
+        while (true) {
+            if (!worksheet["A" + total]) {
+                break;
+            }
+            total++;
+        }
+
+        //依据表
+        for (let i = 2; i < total; i++) {
+            let temp = {};
+            for (let index in keyword) {
+                if (!worksheet[cMap[keyword[index]] + i]) {
+                    if (defaultType && defaultType[keyword[index]]) {
+                        temp[keyword[index]] = defaultType[keyword[index]]
+                    }
+                    else {
+                        temp[keyword[index]] = ""
+                    }
+                }
+                else {
+                    temp[keyword[index]] = worksheet[cMap[keyword[index]] + i]["w"]
+                }
+            }
+
+            dMap.push(temp)
+        }
+
+        return dMap
+    }
+
+    function Meeting(dMap) {
+        for (let index = 0; index < dMap.length; index++) {
+            let fzperson = dMap[index]["负责人"]
+            let ygtime = dMap[index]["预估工时"]
+            let ydjtime = dMap[index]["已登记工时"]
+            let worktype = dMap[index]["任务类型"]
+            let chperson = dMap[index]["参与人员"]
+            if ((worktype == "会议（需求、详设、用例评审会议）" || worktype == "会议（一般会议）") && fzperson != chperson) {
+                let fzAry = (chperson || "").split("、")
+                for (let i in fzAry) {
+                    if (fzAry[i]) {
+                        dMap.push({
+                            "负责人": $.trim(fzAry[i]),
+                            "预估工时": ygtime,
+                            "已登记工时": ydjtime,
+                            "任务类型": worktype,
+                            "参与人员": $.trim(fzAry[i])
+                        })
+                    }
+                }
+
+                if (fzAry.indexOf(fzperson) == -1) {
+                    dMap.push({
+                        "负责人": fzperson,
+                        "预估工时": ygtime,
+                        "已登记工时": ydjtime,
+                        "任务类型": worktype,
+                        "参与人员": fzperson
+                    })
+                }
+                dMap.splice(index, 1)
+                index--
+            }
+        }
+
+        return dMap
+    }
+
+
+    //将原始数据按责任人+任务类型进行划分
+    function groupByPersonWorktype(dMap) {
+        let wt = {}
+        for (let index in WorkType) {
+            wt[WorkType[index]] = {
+                "预估工时": 0,
+                "已登记工时": 0
+            }
+        }
+
+        let worktime = {}
+        for (let key in dMap) {
+            let name = dMap[key]["负责人"]
+            let worktype = dMap[key]["任务类型"]
+            let predict = dMap[key]["预估工时"]
+            let real = dMap[key]["已登记工时"]
+            if (!worktime[name]) {
+                worktime[name] = JSON.parse(JSON.stringify(wt))
+            }
+
+            if ((!predict && !real) || (predict == "0.01") || (real == "0.01")) {
+                continue
+            }
+
+            if (!predict) {
+                predict = real
+            }
+            else if (!real) {
+                real = predict
+            }
+
+            if (!worktime[name][worktype]) {
+                continue
+            }
+
+            worktime[name][worktype]["预估工时"] = parseFloat(worktime[name][worktype]["预估工时"]) + parseFloat(predict)
+            worktime[name][worktype]["已登记工时"] = parseFloat(worktime[name][worktype]["已登记工时"]) + parseFloat(real)
+        }
+
+        return worktime
+    }
+
+    //按人分类统计考勤工时
+    function groupByPerson(kqMap, bztime) {
+        let kqTime = {}
+
+        let personBZTime = {}
+        for (let index in kqMap) {
+            let name = kqMap[index]["员工"]
+            let qjtime = kqMap[index]["请假工时"] || 0
+            if (name && !personBZTime[name]) {
+                personBZTime[name] = bztime
+            }
+
+            personBZTime[name] = parseFloat(personBZTime[name]) - (parseFloat(qjtime) * 7.5 / 8)
+        }
+
+        for (let index in kqMap) {
+            let name = kqMap[index]["员工"]
+            let dept = kqMap[index]["部门"]
+            let time = kqMap[index]["工作时长"]
+            let bztime = personBZTime[name].toFixed(2)
+            let qjtime = kqMap[index]["请假工时"] || 0
+            if (!kqTime[name]) {
+                kqTime[name] = {
+                    "部门": dept,
+                    "考勤工时": 0,
+                    "标准工时": bztime,
+                    "考勤1h工时": 0
+                }
+            }
+
+            kqTime[name]["考勤工时"] = (parseFloat(kqTime[name]["考勤工时"]) + parseFloat(time)).toFixed(2)
+            if (parseFloat(time) != 0) {
+                kqTime[name]["考勤1h工时"] = (parseFloat(kqTime[name]["考勤1h工时"]) + (parseFloat(time) - (1 - parseFloat(qjtime) / 8))).toFixed(2)
+            }
+        }
+
+        return kqTime
+    }
+
+    //const WorkType = ["迭代任务", "非迭代内的技术任务", "会议", "面试", "线上bug修复", "团队管理", "沟通交流", "项目熟悉", "非会议培训", "协助", "其他"];
+    function showdata(worktime, yztime) {
+        let grdata = {}, table = "<table id='tablestyle'>", grlist = []
+            + "<tr class='header'><td rowspan='3'>责任人</td><td colspan = '13'>模型工时</td><td colspan = '9'>辅助工时</td><td rowspan='3'>核算工时</td><td rowspan='3'>标准工时</td><td rowspan='3'>超额核算工时</td><td rowspan='3'>超额核算工时率</td><td rowspan='3'>核算工时控制率</td><td rowspan='3'>考勤工时</td><td rowspan='3'>超额考勤工时</td><td rowspan='3'>超额考勤工时-1h</td><td rowspan='3'>总登记工时</td><td rowspan='3'>等工工时</td><td rowspan='3'>等工工时补零</td><td rowspan='3'>考勤登记差</td><td rowspan='3'>考勤1h登记差</td><td rowspan='3'>模型差比值</td><td rowspan='3'>模型占比</td><td rowspan='3'>辅助占比</td><td rowspan='3'>辅助等工占比</td><td rowspan='3'>部门</td></tr>"
+            + "<tr class='header'><td colspan = '2'>迭代任务</td><td colspan = '2'>非迭代内的技术任务</td><td >版本上线</td><td colspan = '2'>线上bug修复</td><td colspan = '2'>线下bug修复</td><td >线上协助</td><td >评审会</td><td rowspan = '2'>模型总工时</td><td rowspan = '2'>模型总登记工时</td><td>沟通交流</td><td>非会议培训</td><td>一般会议</td><td>团队管理</td><td>项目熟悉</td><td>面试</td><td>自我学习</td><td>其他</td><td rowspan = '2'>辅助总工时</td></tr>"
+            + "<tr class='header'><td>预估工时</td><td>登记工时</td><td>预估工时</td><td>登记工时</td><td>登记工时</td><td>预估工时</td><td>登记工时</td><td>预估工时</td><td>登记工时</td><td>登记工时</td><td>登记工时</td><td>登记工时</td><td>登记工时</td><td>登记工时</td><td>登记工时</td><td>登记工时</td><td>登记工时</td><td>登记工时</td><td>登记工时</td></tr>"
+        for (let name in worktime) {
+            let dept = null
+            try {
+                dept = yztime[name]["部门"]
+            }
+            catch (e) {
+                console.error("Error 01[name]=" + name);
+                continue
+            }
+            if (dept != "前端开发组" && dept != "服务开发组" && dept != "测试组" && dept != "架构组") {
+                continue
+            }
+
+            let info = worktime[name]
+            let mxtime = (info["迭代任务"]["预估工时"] + info["非迭代内的技术任务"]["预估工时"] + info["版本上线"]["已登记工时"] + info["线上bug修复"]["预估工时"] + info["线下bug修复"]["预估工时"] + info["线上协助"]["已登记工时"] + info["会议（需求、详设、用例评审会议）"]["已登记工时"]).toFixed(2)
+            let mxdjtime = (info["迭代任务"]["已登记工时"] + info["非迭代内的技术任务"]["已登记工时"] + info["版本上线"]["已登记工时"] + info["线上bug修复"]["已登记工时"] + info["线下bug修复"]["已登记工时"] + info["线上协助"]["已登记工时"] + info["会议（需求、详设、用例评审会议）"]["已登记工时"]).toFixed(2)
+            let fztime = (info["沟通交流"]["已登记工时"] + info["非会议培训"]["已登记工时"] + info["会议（一般会议）"]["已登记工时"] + info["团队管理"]["已登记工时"] + info["项目熟悉"]["已登记工时"] + info["面试"]["已登记工时"] + info["自我学习"]["已登记工时"] + info["其他（慎选！！）"]["已登记工时"]).toFixed(2)
+            let hstime = (parseFloat(mxtime) + parseFloat(fztime)).toFixed(2)
+            let bztime
+            try {
+                bztime = yztime[name]["标准工时"]
+            }
+            catch (e) {
+                console.log("Error 02[name]=" + name)
+            }
+            let cehstime = (hstime - bztime).toFixed(2)
+            let cehsltime = ((hstime - bztime) * 100 / bztime).toFixed(2) + "%"
+            let cekzltime = ((hstime - bztime) * 100 / hstime).toFixed(2) + "%"
+            let kqtime = yztime[name]["考勤工时"]
+            let cekqtime = (kqtime - bztime).toFixed(2)
+            let cekq1htime = (kqtime - bztime - bztime / 7.5).toFixed(2)
+            let zdjtime = (parseFloat(mxdjtime) + parseFloat(fztime)).toFixed(2)
+            let dgtime = (bztime - zdjtime).toFixed(2)
+            let kqdjctime = (kqtime - zdjtime).toFixed(2)
+            let kq1hdjctime = (kqtime - bztime / 7.5 - zdjtime).toFixed(2)
+            let mxcpercent = ((mxdjtime * 100 - mxtime * 100) / mxtime).toFixed(2) + "%"
+            let mxpercent = (mxtime * 100 / hstime).toFixed(2) + "%"
+            let fzpercent = (fztime * 100 / hstime).toFixed(2) + "%"
+            let fzdjpercent = ((parseFloat(fztime) + (parseFloat(dgtime) > 0 ? parseFloat(dgtime) : 0)) * 100 / hstime).toFixed(2) + "%"
+
+            grdata[name] = {
+                "hstime": hstime,
+                "bztime": bztime,
+                "cehstime": cehstime,
+                "cekzltime": cekzltime,
+                "dept": dept
+            }
+
+            grlist.push({
+                "name": name,
+                "hstime": hstime,
+                "bztime": bztime,
+                "cehstime": cehstime,
+                "cekzltime": cekzltime,
+                "dept": dept
+            })
+
+            table += "<tr>"
+            table += "<td>" + name + "</td>"
+            table += "<td>" + info["迭代任务"]["预估工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["迭代任务"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["非迭代内的技术任务"]["预估工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["非迭代内的技术任务"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["版本上线"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["线上bug修复"]["预估工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["线上bug修复"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["线下bug修复"]["预估工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["线下bug修复"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["线上协助"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["会议（需求、详设、用例评审会议）"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + mxtime + "</td>"
+            table += "<td>" + mxdjtime + "</td>"
+            table += "<td>" + info["沟通交流"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["非会议培训"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["会议（一般会议）"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["团队管理"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["项目熟悉"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["面试"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["自我学习"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + info["其他（慎选！！）"]["已登记工时"].toFixed(2) + "</td>"
+            table += "<td>" + fztime + "</td>"
+            table += "<td>" + hstime + "</td>"
+            table += "<td>" + bztime + "</td>"
+            table += "<td>" + cehstime + "</td>"
+            table += "<td>" + cehsltime + "</td>"
+            table += "<td>" + cekzltime + "</td>"
+            table += "<td>" + kqtime + "</td>"
+            table += "<td>" + cekqtime + "</td>"
+            table += "<td>" + cekq1htime + "</td>"
+            table += "<td>" + zdjtime + "</td>"
+            table += "<td>" + dgtime + "</td>"
+            table += "<td>" + (parseFloat(dgtime) > 0 ? dgtime : 0) + "</td>"
+            table += "<td>" + kqdjctime + "</td>"
+            table += "<td>" + kq1hdjctime + "</td>"
+            table += "<td>" + mxcpercent + "</td>"
+            table += "<td>" + mxpercent + "</td>"
+            table += "<td>" + fzpercent + "</td>"
+            table += "<td>" + fzdjpercent + "</td>"
+            table += "<td>" + dept + "</td>"
+            table += "</tr>"
+        }
+        table += "</table>"
+
+        return { "tablehtml": table, "grdata": grdata }
+    }
+
+
+    function showFZR(data, ownerrelation) {
+        let table = "<table id='tablestyle'><tr><td>负责人</td><td>负责人超额工时</td><td>成员</td><td>核算工时</td><td>标准工时</td><td>个人超额工时</td><td>个人工时控制率</td></tr>"
+        for (let name in ownerrelation) {
+            let groupname = ownerrelation[name]
+
+            let temp = "", fzrhstime = 0, hstotal = 0, kzltotal = 0, total = 0
+            for (let index in groupname) {
+                let grname = groupname[index]
+                if (index != 0) {
+                    temp += "<tr>"
+                }
+                try {
+                    temp += "<td>" + grname + "</td>"
+                    temp += "<td>" + data[grname]["hstime"] + "</td>"
+                    temp += "<td>" + data[grname]["bztime"] + "</td>"
+                    temp += "<td>" + data[grname]["cehstime"] + "</td>"
+                    temp += "<td>" + data[grname]["cekzltime"] + "</td>"
+                }
+                catch (e) {
+                    console.error("Error 02[grname]=" + grname + "为空," + e)
+                    continue
+                }
+
+                temp += "</tr>"
+                if (name == grname) {
+                    fzrhstime = data[grname]["cehstime"]
+                }
+                else {
+                    hstotal = parseFloat(hstotal) + parseFloat(data[grname]["hstime"])
+                    kzltotal = parseFloat(kzltotal) + parseFloat(data[grname]["cekzltime"].replace("%", ""))
+                    total++
+                }
+            }
+
+            let teamtime = (hstotal / total) * ((kzltotal / 100) / total)
+            fzrhstotal = (parseFloat(fzrhstime) + (parseFloat(teamtime) > 0 ? parseFloat(teamtime) : 0)).toFixed(2)
+
+            table += "<tr>"
+            table += "<td rowspan='" + groupname.length + "'>" + name + "</td>"
+            table += "<td rowspan='" + groupname.length + "'>" + fzrhstotal + "</td>"
+            table += temp
+            table += "</tr>"
+        }
+
+        table += "</table>"
+
+        return table
+    }
+
+    // 将csv转换成表格
+    function csv2table(csv) {
+        var html = '<table>';
+        var rows = csv.split('\n');
+        rows.pop(); // 最后一行没用的
+        rows.forEach(function (row, idx) {
+            var columns = row.split(',');
+            columns.unshift(idx + 1); // 添加行索引
+            if (idx == 0) { // 添加列索引
+                html += '<tr>';
+                for (var i = 0; i < columns.length; i++) {
+                    html += '<th>' + (i == 0 ? '' : String.fromCharCode(65 + i - 1)) + '</th>';
+                }
+                html += '</tr>';
+            }
+            html += '<tr>';
+            columns.forEach(function (column) {
+                html += '<td>' + column + '</td>';
+            });
+            html += '</tr>';
+        });
+        html += '</table>';
+        return html;
+    }
+
+    function table2csv(table) {
+        var csv = [];
+        $(table).find('tr').each(function () {
+            var temp = [];
+            $(this).find('td').each(function () {
+                temp.push($(this).html());
+            })
+            temp.shift(); // 移除第一个
+            csv.push(temp.join(','));
+        });
+        csv.shift();
+        return csv.join('\n');
+    }
+
+    // csv转sheet对象
+    function csv2sheet(csv) {
+        var sheet = {}; // 将要生成的sheet
+        csv = csv.split('\n');
+        csv.forEach(function (row, i) {
+            row = row.split(',');
+            if (i == 0) sheet['!ref'] = 'A1:' + String.fromCharCode(65 + row.length - 1) + (csv.length - 1);
+            row.forEach(function (col, j) {
+                sheet[String.fromCharCode(65 + j) + (i + 1)] = { v: col };
+            });
+        });
+        return sheet;
+    }
+
+    // 将一个sheet转成最终的excel文件的blob对象，然后利用URL.createObjectURL下载
+    function sheet2blob(sheet, sheetName) {
+        sheetName = sheetName || 'sheet1';
+        var workbook = {
+            SheetNames: [sheetName],
+            Sheets: {}
+        };
+        workbook.Sheets[sheetName] = sheet;
+        // 生成excel的配置项
+        var wopts = {
+            bookType: 'xlsx', // 要生成的文件类型
+            bookSST: false, // 是否生成Shared String Table，官方解释是，如果开启生成速度会下降，但在低版本IOS设备上有更好的兼容性
+            type: 'binary'
+        };
+        var wbout = XLSX.write(workbook, wopts);
+        var blob = new Blob([s2ab(wbout)], { type: "application/octet-stream" });
+        // 字符串转ArrayBuffer
+        function s2ab(s) {
+            var buf = new ArrayBuffer(s.length);
+            var view = new Uint8Array(buf);
+            for (var i = 0; i != s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+            return buf;
+        }
+        return blob;
+    }
+
+    /**
+     * 通用的打开下载对话框方法，没有测试过具体兼容性
+     * @param url 下载地址，也可以是一个blob对象，必选
+     * @param saveName 保存文件名，可选
+     */
+    function openDownloadDialog(url, saveName) {
+        if (typeof url == 'object' && url instanceof Blob) {
+            url = URL.createObjectURL(url); // 创建blob地址
+        }
+        var aLink = document.createElement('a');
+        aLink.href = url;
+        aLink.download = saveName || ''; // HTML5新增的属性，指定保存文件名，可以不要后缀，注意，file:///模式下不会生效
+        var event;
+        if (window.MouseEvent) event = new MouseEvent('click');
+        else {
+            event = document.createEvent('MouseEvents');
+            event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+        }
+        aLink.dispatchEvent(event);
+    }
+
+    $(function () {
+        document.getElementById('file').addEventListener('change', function (e) {
+            var files = e.target.files;
+            if (files.length == 0) return;
+            var f = files[0];
+            if (!/\.xlsx$/g.test(f.name)) {
+                alert('仅支持读取xlsx格式！');
+                return;
+            }
+            readWorkbookFromLocalFile(f, function (workbook) {
+                readWorkbook(workbook);
+            });
+        });
+        loadRemoteFile('./sample/test.xlsx');
+    });
+
+    function loadRemoteFile(url) {
+        readWorkbookFromRemoteFile(url, function (workbook) {
+            readWorkbook(workbook);
+        });
+    }
+
+    function exportExcel() {
+        var csv = table2csv($('#result table')[0]);
+        var sheet = csv2sheet(csv);
+        var blob = sheet2blob(sheet);
+        openDownloadDialog(blob, '导出.xlsx');
+    }
+
+    function exportSpecialExcel() {
+        var aoa = [
+            ['主要信息', null, null, '其它信息'], // 特别注意合并的地方后面预留2个null
+            ['姓名', '性别', '年龄', '注册时间'],
+            ['张三', '男', 18, new Date()],
+            ['李四', '女', 22, new Date()]
+        ];
+        var sheet = XLSX.utils.aoa_to_sheet(aoa);
+        sheet['!merges'] = [
+            // 设置A1-C1的单元格合并
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }
+        ];
+        openDownloadDialog(sheet2blob(sheet), '单元格合并示例.xlsx');
+    }
+</script>

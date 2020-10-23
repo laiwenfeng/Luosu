@@ -1,0 +1,140 @@
+<!-- app/view/dingding.html -->
+<html>
+
+  <head>
+    <title>Ding.html</title>
+    <style>
+      html,
+      body {
+        width: 100%;
+        margin: 0%;
+        padding: 0%;
+      }
+
+      .container {
+        width: auto;
+        margin: 0px auto;
+      }
+
+      .txtname {
+        width: 120px;
+        display: inline-block;
+        text-align: right;
+        padding-right: 10px;
+      }
+
+      .txtvalue {
+        width: 800px;
+        margin-bottom: 5px;
+      }
+
+      .txaresult {
+        vertical-align: top;
+        width: 800px;
+        height: 100px;
+      }
+
+      .btnget {
+        width: 660px;
+        margin: 0px 20px 5px 110px;
+        display: inline-block;
+      }
+
+      .divpic {
+        width: 100%;
+        height: 768px;
+        display: inline-block;
+        vertical-align: top;
+        margin: 0px auto;
+      }
+
+      .nolabeldivpic {
+        margin-left: 110px;
+      }
+
+      .txtdata {
+        width: 660px;
+        height: 50px;
+        display: inline-block;
+        vertical-align: top;
+      }
+
+      .group {
+        width: 660px;
+      }
+
+      #tablestyle {
+        border-collapse: collapse;
+        font-family: '宋体';
+      }
+
+      .header {
+        text-align: center;
+      }
+
+      #tablestyle td {
+        border: 1px solid black;
+      }
+
+      .bztime {
+        height: 30px;
+      }
+    </style>
+  </head>
+  <script src="../public/js/jQuery/jquery.min.js"></script>
+  <script src="../public/js/xlsx/xlsx.core.min.js"></script>
+
+  <body>
+    <div class="container">
+      <h2>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;标准工时</h2>
+      <div class="mt-sm">
+        <select id="datetype" onchange="ChangeDatetype(this.value)" class="bztime">
+          <option value="1">周</option>
+          <option value="2">自定义</option>
+        </select>
+        <input type="text" id="bztime" value="37.5" class="bztime" />
+      </div>
+      <h2>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;读取excel</h2>
+      <div class="mt-sm">
+        <input type="file" id="file" style="display:none;"
+          accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+        <a href="javascript:selectFile()">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;加载本地excel文件</a>
+      </div>
+    </div>
+    <div class="container">
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;个人工时数据：
+      <p>
+      <div id="result2"></div>
+
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;模型总工时 = 迭代任务预估工时 + 技术任务预估工时 + 线下Bug修复预估工时 + 线上Bug修复登记工时</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;辅助总工时 = 会议登记工时 + 面试登记工时 + 团队管理登记工时 + 沟通交流登记工时 + 协助登记工时 +
+        项目熟悉登记工时 + 非会议培训登记工时 + 其他登记工时</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;核算工时 = 模型总工时 + 辅助总工时</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;模型总登记工时 = 迭代任务登记工时 + 技术任务登记工时 + 线下Bug修复登记工时 + 线上Bug修复登记工时</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;总登记工时 = 模型总登记工时 + 辅助总工时</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;等工工时 = 标准工时 - 总登记工时</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;模型差值比 = (模型总登记工时 - 模型总工时) / 模型总工时</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;超额考勤工时 = 考勤工时 - 标准工时</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;考勤登记差 =考勤工时-总登记工时</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;模型占比 = 模型总工时/核算工时</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;辅助占比 = 辅助总工时/核算工时</p>
+
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;负责人工时数据：</p>
+      <div id="result5"></div>
+
+      <label class="txtname">图|全体成员</label><br />
+      <div id="map0" class="divpic"></div><br />
+      <label class="txtname">图|技术开发部</label><br />
+      <div id="map1" class="divpic"></div><br />
+      <label class="txtname">图|前端组</label><br />
+      <div id="map2" class="divpic"></div><br />
+      <label class="txtname">图|后端组</label><br />
+      <div id="map3" class="divpic"></div><br />
+      <label class="txtname">图|架构组</label><br />
+      <div id="map4" class="divpic"></div><br />
+      <label class="txtname">图|测试组</label><br />
+      <div id="map5" class="divpic"></div><br />
+    </div>
+  </body>
+
+</html>

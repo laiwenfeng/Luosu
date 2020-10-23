@@ -1,0 +1,5 @@
+{
+  "include": [
+    "**/*", ".history/app/app.js"
+  ]
+}
