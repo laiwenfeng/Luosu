@@ -14,7 +14,8 @@
     "egg-view-art": "^1.0.3",
     "egg-view-nunjucks": "^2.2.0",
     "koa-art-template": "^1.1.1",
-    "moment": "^2.28.0"
+    "moment": "^2.28.0",
+    "mongoose": "^5.10.10"
   },
   "devDependencies": {
     "autod": "^3.0.1",

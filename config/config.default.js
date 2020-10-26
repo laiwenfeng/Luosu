@@ -56,13 +56,14 @@ module.exports = appInfo => {
         }
     }
 
-    //MongoDB地址
+    //MongoDB地址 
     config.mongoose = {
-        url: process.env.EGG_MONGODB_URL || 'mongodb://127.0.0.1:27017/manhourdb',
+        url: process.env.EGG_MONGODB_URL || 'mongodb://admin:biosan#17ls@127.0.0.1:27017/manhourdb?authSource=admin',
         options: {
             server: {
                 poolSize: 40,
             },
+            useUnifiedTopology: true
         },
     };
 
