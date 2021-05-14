@@ -57,15 +57,15 @@ module.exports = appInfo => {
     }
 
     //MongoDB地址 
-    config.mongoose = {
-        url: process.env.EGG_MONGODB_URL || 'mongodb://admin:biosan#17ls@127.0.0.1:27017/manhourdb?authSource=admin',
-        options: {
-            server: {
-                poolSize: 40,
-            },
-            useUnifiedTopology: true
-        },
-    };
+    // config.mongoose = {
+    //     url: process.env.EGG_MONGODB_URL || 'mongodb://admin:biosan#17ls@127.0.0.1:27017/manhourdb?authSource=admin',
+    //     options: {
+    //         server: {
+    //             poolSize: 40,
+    //         },
+    //         useUnifiedTopology: true
+    //     },
+    // };
 
     // add your user config here
     const userConfig = {
