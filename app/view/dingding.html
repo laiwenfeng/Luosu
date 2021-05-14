@@ -88,17 +88,25 @@
         <div class="container">
             <table align="center">
                 <tr align="center">
+                    <td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;统计类型</b></td>
                     <td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;标准工时</b></td>
                     <td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;读取excel</b></td>
                 </tr>
                 <tr align="center">
                     <td>
+                        <select id="datatype" class="bztime">
+                            <option value="1">纯工时</option>
+                            <option value="2" selected>工时报告</option>
+                        </select>
+                    </td>
+                    <td>
                         <select id="datetype" onchange="ChangeDatetype(this.value)" class="bztime">
                             <option value="1">周</option>
                             <option value="2">自定义</option>
-                            <option value="m7">7月</option>
-                            <option value="m8">8月</option>
-                            <option value="m9">9月</option>
+                            <option value="m1">1月</option>
+                            <option value="m2">2月</option>
+                            <option value="m3">3月</option>
+                            <option value="m4">4月</option>
                         </select>
                         <input type="text" id="bztime" value="37.5" class="bztime" />
                     </td>
@@ -169,6 +177,7 @@
         let date1 = $("#date1").val()
         let date2 = $("#date2").val()
         let datecycle = $("#datecycle").val()
+        let month = date1.split(".")[0]
 
         if(!date1){
             alert("请填写起始日期")
@@ -187,7 +196,7 @@
             alert("开始发送")
             $.ajax({
                 url: '/dingding/senddata',
-                data: {"grlist":GrList, 'datecycle':datecycle, 'date1':date1, 'date2':date2},
+                data: {"grlist":GrList, 'datecycle':datecycle, 'date1':date1, 'date2':date2, 'month':month},
                 type: 'post',
                 headers: {
                     // 前后端不分离的情况加每次打开客户端，egg会直接在客户端的 Cookie 中写入密钥 ，密钥的 Key 就是 'scrfToken' 这个字段，所以直接获取就好了
@@ -233,21 +242,16 @@
     }
 
     function ChangeDatetype(v) {
-        if (v == "1") {
-            $("#bztime").val("37.5")
+        const BZTIME = {
+            "1": "37.5",
+            "2": "",
+            "m1": "150",
+            "m2": "127.5",
+            "m3": "172.5",
+            "m4": "127.5"
         }
-        else if(v == "2") {
-            $("#bztime").val("")
-        }
-        else if(v == "m7"){
-            $("#bztime").val("172.5")
-        }
-        else if(v == "m8"){
-            $("#bztime").val("157.5")
-        }
-        else if(v == "m9"){
-            $("#bztime").val("172.5")
-        }
+
+        $("#bztime").val(BZTIME[v] || "")
     }
 
     function selectFile() {
@@ -292,36 +296,106 @@
         });
     }
 
-
     const ECode = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
     const Keyword = ["负责人", "预估工时", "已登记工时", "任务类型", "参与人员"]
     const KaoqingKeyword = ["员工", "部门", "工作时长", "请假工时"]
     const WorkType = ["迭代任务", "非迭代内的技术任务", "版本上线", "线上bug修复", "线下bug修复", "线上协助", "会议（需求、详设、用例评审会议）", "会议（一般会议）", "面试", "团队管理", "沟通交流", "项目熟悉", "非会议培训", "自我学习", "其他（慎选！！）"]
 
     const ProjectOwner = {
-        "刘宗文": {
-            7: ["张思轶", "褚锦涛", "蒋超", "范逸东", "吴嘉豪", "张坚革", "郑磊", "张浩磊", "赵晟", "梁宝龙", "郭玉燕"], 
-            8: ["张思轶", "褚锦涛", "蒋超", "范逸东", "梁宝龙", "吴嘉豪", "张坚革", "郑磊", "张浩磊", "赵晟", "郭玉燕"], 
-            9: ["陆夏立", "骆家豪", "褚锦涛", "范逸东", "梁宝龙", "吴嘉豪", "张坚革", "郑磊", "张浩磊", "赵晟", "郭玉燕"] 
+        "梁宝龙": {
+            1: ["骆家豪", "褚锦涛", "彭甜甜", "赵晟", "侯冠男", "吴嘉豪"],
+            2: ["骆家豪", "褚锦涛", "彭甜甜", "赵晟", "侯冠男", "吴嘉豪"],
+            3: ["骆家豪", "褚锦涛", "赵晟", "侯冠男", "吴嘉豪"],
+            4: ["骆家豪", "褚锦涛", "侯冠男"]
         }, 
         "洪闻": {
-            9: ["丁晓欢", "叶洁", "怀欣冉", "张长安", "段永菊"]
+            1: ["丁晓欢", "叶洁", "毛莉丽", "怀欣冉", "张长安", "段永菊"],
+            2: ["丁晓欢", "叶洁", "怀欣冉", "王浩东", "张长安", "段永菊"],
+            3: ["丁晓欢", "叶洁", "怀欣冉", "王浩东", "张长安", "段永菊"],
+            4: ["丁晓欢", "叶洁", "怀欣冉", "王浩东", "张长安", "段永菊"]
         },
         "程兴":{
-            7: ["赵川", "王凯杰", "黄金名", "刘慧杰"],
-            8: ["赵川", "王凯杰", "黄金名", "刘慧杰"],
-            9: ["赵川", "王凯杰", "黄金名", "刘慧杰"]
+            1: ["王凯杰", "李华锋", "牛二强", "刘慧杰"],
+            2: ["王凯杰", "李华锋", "牛二强", "刘慧杰"],
+            3: ["王凯杰", "李华锋", "牛二强", "刘慧杰"],
+            4: ["王凯杰", "李华锋", "牛二强", "刘慧杰"]
         },
         "孙世豪":{
-            7: ["胡茜", "吴林涛", "姜宇"],
-            8: ["胡茜", "吴林涛", "姜宇"],
-            9: ["胡茜", "吴林涛", "姜宇"]
+            1: ["胡茜", "吴林涛", "姜宇"],
+            2: ["胡茜", "吴林涛", "姜宇"],
+            3: ["胡茜", "吴林涛", "姜宇"],
+            4: ["胡茜", "吴林涛", "姜宇"]
         }, 
         "沈晓振": {
-            7: ["阮梦帅", "彭甜甜", "陈敬波", "高进"],
-            8: ["阮梦帅", "彭甜甜", "陈敬波", "高进"],
-            9: ["阮梦帅", "彭甜甜", "陈敬波", "高进"]
+            1: ["阮梦帅", "周洁", "陈敬波", "高进"],
+            2: ["阮梦帅", "周洁", "陈敬波", "高进"],
+            3: ["阮梦帅", "周洁", "陈敬波", "高进"],
+            4: ["阮梦帅", "周洁", "陈敬波", "管啸尘"]
+        }, 
+        "唐洪云": {
+            1: ["邱克浩", "黄金浩", "王盼"],
+            2: ["陆夏立", "马增辉", "王盼"],
+            3: ["陆夏立", "邱克浩", "王盼"],
+            4: ["陆夏立", "邱克浩", "王盼"]
         }
+    }
+
+    const PersonLevel = {
+        "邱克浩": "P8",
+        "陆夏立": "P6",
+        "丁晓欢": "P6",
+        "骆家豪": "P6",
+        "周洁": "P5",
+        "王凯杰": "P5",
+        "胡茜": "P5",
+        "张坚革": "P5",
+        "李华锋": "P5",
+        "阮梦帅": "P5",
+        "叶洁": "P5",
+        "于轩": "P4",
+        "彭甜甜": "P4",
+        "毛莉丽": "P3",
+        "褚锦涛": "P3",
+        "卢学先": "P7",
+        "沈晓振": "P6",
+        "吴林涛": "P6",
+        "孙世豪": "P6",
+        "黄金浩": "P6",
+        "洪闻": "P6",
+        "唐洪云": "P6",
+        "管啸尘": "P6",
+        "怀欣冉": "P5",
+        "程兴": "P5",
+        "张浩磊": "P5",
+        "梁宝龙": "P5",
+        "黄金名": "P5",
+        "马增辉": "P5",
+        "牛二强": "P5",
+        "赵晟": "P4",
+        "侯冠男": "P4",
+        "王浩东": "P4",
+        "陈敬波": "P4",
+        "王盼": "P7",
+        "郭玉燕": "P6",
+        "张长安": "P6",
+        "姜宇": "P6",
+        "高超": "P6",
+        "吴嘉豪": "P5",
+        "高进": "P4",
+        "刘慧杰": "P4",
+        "段永菊": "P4",
+        "董仕静": "P3",
+        "陈巧林": "P7",
+        "彭正发": "P5"
+    }
+
+    const LevelCost = {
+        "P8": 2500,
+        "P7": 1900,
+        "P6": 1400,
+        "P5": 1200,
+        "P4": 1000,
+        "P3": 850
     }
 
     // const ProjectOwner = {
@@ -335,16 +409,20 @@
 
     const PersonFilter = []
 
-    var GrList = null
+    var GrList = null, TeamList = null
 
     function readWorkbook(workbook) {
         alert('开始计算');
 
+        let datatype = $("#datatype").val()
+
         let bztime = $("#bztime").val()
-        if (!bztime || isNaN(bztime)) {
+        // 工时报告(datatype=2)才需标准工时
+        if (datatype == 2 && (!bztime || isNaN(bztime))) {
             alert("标准工时为空或值不合法！")
             return
         }
+
 
         //工作表1：任务；工作表2：缺陷；工作表3：考勤
         var sheetNames = workbook.SheetNames; // 工作表名称集合
@@ -360,24 +438,49 @@
         dMap = keyInfo(dMap, worksheet2, Keyword, { "任务类型": "线下bug修复" })
         //	document.getElementById('result3').innerHTML = JSON.stringify(dMap)
 
-        //考勤
-        let worksheet3 = workbook.Sheets[sheetNames[2]] // 读取第三张sheet
-        let kqMap = keyInfo([], worksheet3, KaoqingKeyword)
-        let kqTime = groupByPerson(kqMap, bztime)
-        //	console.log("result4="+JSON.stringify(kqTime))
-        //	document.getElementById('result4').innerHTML = JSON.stringify(kqTime)
+        //考勤 工时报告(datatype=2)才需考勤
+        let worksheet3 = null, kqMap = null, kqTime = null
+        if(datatype == 2){
+            worksheet3 = workbook.Sheets[sheetNames[2]] // 读取第三张sheet
+            kqMap = keyInfo([], worksheet3, KaoqingKeyword)
+            kqTime = groupByPerson(kqMap, bztime)
+            //	console.log("result4="+JSON.stringify(kqTime))
+            //	document.getElementById('result4').innerHTML = JSON.stringify(kqTime)
+        }
 
         //个人工时表数据
         let pdata = groupByPersonWorktype(dMap)
+        
+        if(datatype == 1){
+            let personWTData = {}
+            for(let name in pdata){
+                for(let timetype in pdata[name]){
+                    let yg = pdata[name][timetype]["预估工时"]
+                    let dj = pdata[name][timetype]["已登记工时"]
+                    if(!personWTData[name]){
+                        personWTData[name] = {
+                            "预估工时": yg,
+                            "已登记工时": dj 
+                        }
+                    }
+                    else {
+                        personWTData[name]["预估工时"] = parseFloat(personWTData[name]["预估工时"], 10) + parseFloat(yg, 10)
+                        personWTData[name]["已登记工时"] = parseFloat(personWTData[name]["已登记工时"], 10) + parseFloat(dj, 10)
+                    }
+                }
+            }
+
+            document.getElementById('result2').innerHTML = GetWT(personWTData)
+
+            return 
+        }
 
         let finaldata = showdata(pdata, kqTime)
         document.getElementById('result2').innerHTML = finaldata["tablehtml"]
 
         //负责人工时表数据
         let datetype = $("#datetype").val()
-        if(datetype.indexOf("m") != -1){
-            document.getElementById('result5').innerHTML = showFZR(finaldata["grdata"], ProjectOwner, datetype.replace("m", ""))
-        }
+        document.getElementById('result5').innerHTML = showFZR(finaldata["grdata"], ProjectOwner, datetype)
 
         //工时图
         GetTTT(pdata, kqTime, ['前端开发组', '服务开发组', '架构组', '测试组'], '全体成员图', 'map0')
@@ -387,15 +490,58 @@
         GetTTT(pdata, kqTime, ['架构组'], '架构组工时图', 'map4')
         GetTTT(pdata, kqTime, ['测试组'], '测试组工时图', 'map5')
 
-        let SendData = SendDataInit(finaldata["grlist"])
+        let SendData = SendDataInit(finaldata["grlist"], datetype)
 
         document.getElementById('result6').innerHTML = SendData["html"]
         GrList = SendData["grlist"]
 
+        AddTeamtime(GrList, TeamList)
+
         alert('结束计算');
     }
 
-    function SendDataInit(grlist) {
+
+    function GetWT(pdata){
+        let table = "<table id='tablestyle'>"
+            + "<tr class='header'><td><b>序号</b></td><td><b>责任人</b></td><td><b>核算工时</b></td><td><b>登记工时</b></td><td><b>登记成本</b></td></tr>"
+
+        let total = 0, rowno = 1
+        for (let name in pdata) {
+            let yg = pdata[name]["预估工时"]
+            let dj = pdata[name]["已登记工时"]
+            let djcb = " - "
+
+            let level = PersonLevel[name]
+            if(level){
+                djcb = (parseFloat(LevelCost[level], 10) * parseFloat(dj, 10) / 8).toFixed(2)
+                total = parseFloat(djcb, 10) + parseFloat(total, 10)
+            }
+
+            table += "<tr><td>" + (rowno++) + "</td><td>" + name + "</td><td>" + yg + "</td><td>" + dj + "</td><td>" + djcb + "</td></tr>"
+        }
+
+        table += "<tr><td colspan='4'>开发测试总成本</td><td>" + total.toFixed(2) + "</td></tr>"
+
+        table += "</table>"
+
+        return table
+    }
+
+
+    function AddTeamtime(persondata, teamdata){
+        for(let i in persondata){
+            let {name, cehstime} = persondata[i]
+            if(teamdata[name]){
+                persondata[i]["teamtime"] = teamdata[name]
+                persondata[i]["cehstimetotal"] = (parseFloat(cehstime) + parseFloat(teamdata[name])).toFixed(2)
+            }
+            else{
+                persondata[i]["cehstimetotal"] = cehstime
+            }
+        }
+    }
+
+    function SendDataInit(grlist, datetype) {
         let deptObj = {
             "前端开发组": "技术开发部",
             "服务开发组": "技术开发部",
@@ -419,6 +565,7 @@
             return 1
         })
 
+        let datetypeText = datetype.indexOf("m") == -1 ? "周": "月"
         let alltime = 0, jstime = 0, cstime = 0, alltemp = 0, jstemp = 0, cstemp = 0, allrank = 1, jsrank = 1, csrank = 1
         let table = "<table id='tablestyle'>"
             + "<tr class='header'><td><b>责任人</b></td><td><b>核算工时</b></td><td><b>标准工时</b></td><td><b>超额工时</b></td><td><b>全体排名</b></td><td><b>部门排名</b></td><td><b>备注</b></td></tr>"
@@ -463,33 +610,33 @@
 
             let remark = ""
             if (cepercent <= -5) {
-                remark = "亲爱的小伙伴，你上周的工时未达标，可以联系你的小组长申请额外任务哦！"
+                remark = "亲爱的小伙伴，你上"+datetypeText+"的工时未达标，可以联系你的小组长申请额外任务哦！"
             }
             else if (cepercent > -5 && cepercent < 0) {
-                remark = "亲爱的小伙伴，你上周的工时未达标，这周还需加油工作才可以拿到奖励哦！"
+                remark = "亲爱的小伙伴，你上"+datetypeText+"的工时未达标，这"+datetypeText+"还需加油工作才可以拿到奖励哦！"
             }
             else if (cepercent == 0) {
-                remark = "亲爱的小伙伴，你上周的工时刚刚好达标，继续努力工作就可以拿到额外奖励哦！"
+                remark = "亲爱的小伙伴，你上"+datetypeText+"的工时刚刚好达标，继续努力工作就可以拿到额外奖励哦！"
             }
             else if (cepercent > 0 && cepercent < 5) {
-                remark = "亲爱的小伙伴，做得不错！你上周的工时已超额，祝贺你拿到额外奖励，新的一周继续努力吧！"
+                remark = "亲爱的小伙伴，做得不错！你上"+datetypeText+"的工时已超额，祝贺你拿到额外奖励，新的一"+datetypeText+"继续努力吧！"
             }
             else if (cepercent >= 5 && cepercent < 10) {
-                remark = "亲爱的小伙伴，做得不错！你上周的工时超额大于等于5%，丰厚的额外奖励在等着你！继续加油！"
+                remark = "亲爱的小伙伴，做得不错！你上"+datetypeText+"的工时超额大于等于5%，丰厚的额外奖励在等着你！继续加油！"
             }
             else if (cepercent >= 10 && cepercent < 15) {
                 let rankremark = "名列团队辛勤榜前茅"
                 if (allrank == 1) {
                     rankremark = "荣登团队辛勤榜榜首"
                 }
-                remark = "亲爱的小伙伴，你辛苦了！你上周的工时超额大于等于10%，" + rankremark + "，即将收获属于自己的丰厚奖励！继续加油！"
+                remark = "亲爱的小伙伴，辛苦了！你上"+datetypeText+"的工时超额大于等于10%，" + rankremark + "，即将收获属于自己的丰厚奖励！继续加油！"
             }
             else if (cepercent >= 15) {
                 let rankremark = "名列团队辛勤榜前茅"
                 if (allrank == 1) {
                     rankremark = "荣登团队辛勤榜榜首"
                 }
-                remark = "亲爱的小伙伴，你辛苦了！你上周的工时超额大于等于15%，" + rankremark + "，即将收获属于自己的丰厚奖励！继续加油！"
+                remark = "亲爱的小伙伴，辛苦了！你上"+datetypeText+"的工时超额大于等于15%，" + rankremark + "，即将收获属于自己的丰厚奖励！继续加油！"
             }
 
             tempAry[i]['remark'] = remark
@@ -765,6 +912,7 @@
             let worktype = dMap[key]["任务类型"]
             let predict = dMap[key]["预估工时"]
             let real = dMap[key]["已登记工时"]
+
             if (!worktime[name]) {
                 worktime[name] = JSON.parse(JSON.stringify(wt))
             }
@@ -946,6 +1094,11 @@
 
 
     function showFZR(data, ownerrelation, month) {
+        if(month.indexOf("m") == -1){
+            return
+        }
+        month = month.replace("m", "")
+        
         let table = "<table id='tablestyle'><tr><td>负责人</td><td>负责人超额工时</td><td>成员</td><td>核算工时</td><td>标准工时</td><td>个人超额工时</td><td>个人工时控制率</td></tr>"
         for (let name in ownerrelation) {
             let groupname = ownerrelation[name][month]
@@ -990,6 +1143,11 @@
             table += "<td rowspan='" + groupname.length + "'>" + fzrhstotal + "(个人："+fzrhstime+"，团队："+teamtime.toFixed(2)+")" + "</td>"
             table += temp
             table += "</tr>"
+
+            if(!TeamList){
+                TeamList = {}
+            }
+            TeamList[name] = teamtime.toFixed(2)
         }
 
         table += "</table>"

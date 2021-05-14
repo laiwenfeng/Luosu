@@ -111,10 +111,6 @@ class DingdingController extends Controller {
                             {
                                 "key": "部门排名：",
                                 "value": grlist[i]["deptrank"]
-                            },
-                            {
-                                "key": "（最终工时奖励以审核后数据为准）",
-                                "value": ""
                             }
                         ],
                         "image": datecycle == "1" ? "@lADPDetfRws2AjTNAX_NA4Q" : "@lADPDetfR7SqdLrNAX_NA4Q",
@@ -123,12 +119,37 @@ class DingdingController extends Controller {
                 }
             }
 
+            if(datecycle == "1"){
+                msg["oa"]["body"]["form"].push({
+                    "key": "（最终工时奖励以审核后数据为准，有任何疑惑或建议，可随时联系项目管理组）",
+                    "value": ""
+                })
+            }
+            else{
+                if(grlist[i]["teamtime"] && parseFloat(grlist[i]["teamtime"]) != 0){
+                    msg["oa"]["body"]["form"].push({
+                        "key": "团队加成/h：",
+                        "value": grlist[i]["teamtime"]
+                    })
+                    msg["oa"]["body"]["form"].push({
+                        "key": "总超额/h：",
+                        "value": grlist[i]["cehstimetotal"]
+                    })
+                }
+    
+                if(parseFloat(grlist[i]["cehstimetotal"]) > 0){
+                    msg["oa"]["body"]["form"].push({
+                        "key": "     ",
+                        "value": "依据《数创中心项目激励方案》规定，此次发放总奖励的60%，剩余40%将在年底核算后统一发放。"
+                    })
+                }
+            }
+
             if(umap[grlist[i]["name"]]){
-                // await Dingding.SendData(token, umap[grlist[i]["name"]], false, msg)
-                if(i == 0){
-                    await Dingding.SendData(token, '224321152326074578', false, msg)
+            //    await Dingding.SendData(token, umap[grlist[i]["name"]], false, msg)
+                if(i <= 5){
                     await Dingding.SendData(token, '254', false, msg)
-                    console.log("月度数据")
+                    console.log("周数据")
                 }
                 // console.log(JSON.stringify(msg))
             }
@@ -146,9 +167,8 @@ class DingdingController extends Controller {
         }
 
         let token = await Dingding.GetToken()
-        let showdata = []
         let data = this.ctx.request.body
-        let grlist = data["grlist"]
+        let {grlist, month } = data
         for (let i in grlist) {
             let msg = {
                 "msgtype": "oa",
@@ -159,7 +179,7 @@ class DingdingController extends Controller {
                         "text": "工时管理"
                     },
                     "body": {
-                        "title": "请查收你的季度工时报告(Q3)",
+                        "title": "请查阅你的月度工时报告("+month+")",
                         "form": [
                             {
                                 "key": "     ",
@@ -189,7 +209,7 @@ class DingdingController extends Controller {
                                 "value": grlist[i]["deptrank"]
                             }
                         ],
-                        "image": "@lADPDeRESkPpkevNAX_NA4Q",
+                        "image": "@lADPDetfR7SqdLrNAX_NA4Q",
                         "author": "项目管理组 "
                     }
                 }
@@ -209,18 +229,15 @@ class DingdingController extends Controller {
             if(parseFloat(grlist[i]["cehstimetotal"]) > 0){
                 msg["oa"]["body"]["form"].push({
                     "key": "     ",
-                    "value": "依据《数创中心项目激励方案》规定，此次发放总奖励的60%，剩余40%将在年底统一发放。"
+                    "value": "依据《数创中心项目激励方案》规定，此次发放总奖励的60%，剩余40%将在年底核算后统一发放。"
                 })
             }
 
             if(umap[grlist[i]["name"]]){
                 // await Dingding.SendData(token, umap[grlist[i]["name"]], false, msg)
-                // await Dingding.SendData(token, '224321152326074578', false, msg)
-                // await Dingding.SendData(token, '254', false, msg)
-                if(i == 0){
-                    await Dingding.SendData(token, '224321152326074578', false, msg)
+                if(i <= 5){
                     await Dingding.SendData(token, '254', false, msg)
-                    console.log("季度数据")
+                    console.log("月度数据")
                 }
                 console.log(JSON.stringify(msg))
             }

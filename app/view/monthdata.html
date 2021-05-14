@@ -22,6 +22,10 @@
             <label for="month8">8月</label>&nbsp;&nbsp;&nbsp;&nbsp;
             <input id="month9" name="month" type="checkbox" value="9" />
             <label for="month9">9月</label>&nbsp;&nbsp;&nbsp;&nbsp;
+            <input id="month10" name="month" type="checkbox" value="10" />
+            <label for="month10">10月</label>&nbsp;&nbsp;&nbsp;&nbsp;
+            <input id="month11" name="month" type="checkbox" value="11" />
+            <label for="month11">11月</label>&nbsp;&nbsp;&nbsp;&nbsp;
             <input id="issend" name="issend" type="checkbox" value="1" />
             <label for="issend">工资已发放</label>&nbsp;&nbsp;&nbsp;&nbsp;
             <button onclick="Monthdata()">计算</button>
@@ -55,8 +59,8 @@
         if (confirm(confirmremark)) {
             alert("开始发送")
             $.ajax({
-                url: isseason ? '/dingding/sendseasondata' : "/dingding/senddata",
-                data: { "grlist":GrList, "datetype":"month", "month":month.join("")},
+                url: '/dingding/sendseasondata',
+                data: { "grlist":GrList, "datetype":"month", "month":month.join(",")},
                 type: 'post',
                 headers: {
                     // 前后端不分离的情况加每次打开客户端，egg会直接在客户端的 Cookie 中写入密钥 ，密钥的 Key 就是 'scrfToken' 这个字段，所以直接获取就好了
@@ -127,7 +131,7 @@
 
 
     function SendDataInit(grlist, month, issend, isseason) {
-        const PersonFilter = ["张思轶", "高进", "褚锦涛", "陈敬波", "蒋超"]
+        const PersonFilter = ["张思轶", "蒋超", "高进", "陈敬波", "牛二强", "马增辉", "李华锋", "吴巍", "褚锦涛", "董仕静", "毛莉丽"]
 
         let deptObj = {
             "前端开发组": "技术开发部",
@@ -162,8 +166,12 @@
         table += "</tr>"
 
         for (let i in tempAry) {
-            let cehstime = parseFloat(tempAry[i]["cehstime"])
-            let bztime = parseFloat(tempAry[i]["bztime"])
+            if(tempAry[i]["name"] == "李华锋"){
+                console.log("1-" + (tempAry[i]["cehstime"] == undefined))
+                console.log("2-" + (tempAry[i]["cehstime"] == "undefined"))
+            }
+            let cehstime = parseFloat(tempAry[i]["cehstime"] || 0)
+            let bztime = parseFloat(tempAry[i]["bztime"] || 0)
             let dept = tempAry[i]["dept"]
             let cepercent = cehstime * 100 / bztime
 
@@ -247,7 +255,7 @@
                 + "</td><td>" + tempAry[i]["rank"] + "</td><td>" + tempAry[i]["deptrank"] + "</td><td>" + tempAry[i]["remark"] + "</td><td>" + tempAry[i]["teamtime"] 
                 + "</td>"
             for(let mi in month){
-                table += "<td>"+tempAry[i]["teammonth"+month[mi]]+"</td>"
+                table += "<td>"+(tempAry[i]["teammonth"+month[mi]] || "-")+"</td>"
             }
             table += "<td>" + tempAry[i]["cehstimetotal"] + "</td>"
             table += "</tr>"
